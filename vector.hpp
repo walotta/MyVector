@@ -71,7 +71,7 @@ namespace sjtu {
                     if(*it!=nullptr)delete *it;
                     it++;
                 }
-                delete _Begin;
+                delete []_Begin;
                 _Begin=nullptr;
             }
         }
