@@ -4,7 +4,7 @@ project(MyVector)
 set(CMAKE_CXX_STANDARD 14)
 
 add_executable(MyVector
-        data/three/code.cpp
+        data/two/code.cpp
         exceptions.hpp
         utility.hpp
         vector.hpp)

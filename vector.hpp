@@ -5,6 +5,7 @@
 
 #include <climits>
 #include <cstddef>
+#include <iostream>
 
 namespace sjtu {
 /**
@@ -14,38 +15,45 @@ namespace sjtu {
     template<typename T>
     class vector {
     private:
-        T* _Begin=nullptr;
-        T* _storeEnd=nullptr;
-        T* _dataEnd=nullptr;
+        T** _Begin=nullptr;
+        T** _storeEnd=nullptr;
+        T** _dataEnd=nullptr;
         void _build(int size=8)
         {
-            T* tem=(T*)::operator new(size*sizeof(T));
-            if(_Begin!=nullptr)
+            T** tem=new T*[size];
+            /*if(_Begin!=nullptr)
             {
-                /*for(int i=_dataBegin-_storeBegin;i<_dataEnd-_storeBegin+1;i++)
+                //memcpy(tem,_Begin,(_storeEnd-_Begin+1)*sizeof(T));
+                for(auto it=_Begin;it!=_storeEnd+1;it++)
                 {
-                    tem[k]=_storeBegin[i];
-                    k++;
-                }*/
-                /*auto tem_it=tem;
-                for(auto it=_Begin;it!=_dataEnd+1;it++)
-                {
-                    *tem_it=*it;
-                    tem_it++;
-                }*/
-                memcpy(tem,_Begin,(_storeEnd-_Begin+1)*sizeof(T));
-                //todo
-                /*while(tem_it!=tem+size)
-                {
-                    tem_it->T();
-                    tem_it++;
-                }*/
+                    tem[it-_Begin]=*it;
+                    *it=nullptr;
+                }
             }
             _deleteStorage();
             if(_Begin!=nullptr)_dataEnd=tem+(_storeEnd-_Begin);
             else _dataEnd=tem-1;
             _storeEnd=tem+size-1;
-            _Begin=tem;
+            _Begin=tem;*/
+
+            if(_Begin!=nullptr)
+            {
+                for(auto it=_Begin;it!=_storeEnd+1;it++)
+                {
+                    tem[it-_Begin]=*it;
+                    *it=nullptr;
+                }
+                int _size_=_storeEnd-_Begin+1;
+                _deleteStorage();
+                _Begin=tem;
+                _dataEnd=tem+_size_-1;
+                _storeEnd=tem+size-1;
+            }else
+            {
+                _Begin=tem;
+                _storeEnd=tem+size-1;
+                _dataEnd=tem-1;
+            }
         }
         void _rebuildMore()
         {
@@ -58,16 +66,13 @@ namespace sjtu {
             if(it==nullptr)return;
             else
             {
-                /*for(;it!=itEnd;it++)
+                while(_dataEnd-it>=0)
                 {
-                    it->~T();
-                }*/
-                while(it!=_dataEnd+1)
-                {
-                    it->~T();
+                    if(*it!=nullptr)delete *it;
                     it++;
                 }
-                operator delete(_Begin);
+                delete _Begin;
+                _Begin=nullptr;
             }
         }
     public:
@@ -87,14 +92,14 @@ namespace sjtu {
              */
             int _header=1;//1向后，-1向前
             vector* _father=nullptr;
-            T* _where=nullptr;
+            T** _where=nullptr;
         public:
             /**
              *
              * return a new iterator which pointer n-next elements
              * as well as operator-
              */
-            iterator(vector* father=nullptr,T* where=nullptr,int header=1):_header(header),_father(father),_where(where) {	}
+            iterator(vector* father=nullptr,T** where=nullptr,int header=1):_header(header),_father(father),_where(where) {	}
             iterator(const iterator &o):_header(o._header),_father(o._father),_where(o._where){}
             iterator operator+(const int &n) const {
                 int __pos=_where-_father->_Begin+n*_header;
@@ -154,7 +159,7 @@ namespace sjtu {
              */
             T& operator*() const{
                 if(_father==nullptr || _where>_father->_dataEnd || _where < _father->_Begin)throw invalid_iterator();
-                else return *_where;
+                else return **_where;
             }
             /**
              *
@@ -191,14 +196,14 @@ namespace sjtu {
              */
             const int _header=1;//1向后，-1向前
             const vector* _father;
-            const T* _where=nullptr;
+            T** _where=nullptr;
         public:
             /**
              *
              * return a new iterator which pointer n-next elements
              * as well as operator-
              */
-            const_iterator(const vector* father=nullptr,T* where=nullptr,int header=1):_header(header),_father(father),_where(where) {	}
+            const_iterator(const vector* father=nullptr,T** where=nullptr,int header=1):_header(header),_father(father),_where(where) {	}
             const_iterator(const const_iterator &o):_header(o._header),_father(o._father),_where(o._where){}
             const_iterator operator+(const int &n) const {
                 int __pos=_where-_father->_dataBegin+n*_header;
@@ -264,7 +269,7 @@ namespace sjtu {
              */
             const T& operator*() const{
                 if(_father==nullptr || _where>_father->_dataEnd || _where < _father->_Begin)throw invalid_iterator();
-                else return *_where;
+                else return **_where;
             }
             /**
              *
@@ -298,11 +303,12 @@ namespace sjtu {
             int n=other._storeEnd-other._Begin;
             _build(n+1);
             _dataEnd=(other._dataEnd-other._Begin)+_Begin;
-            /*for(int i=other._dataBegin-other._storeBegin;i<other._dataEnd-other._storeBegin+1;i++)
+            //memcpy(_Begin,other._Begin,(n+1)*sizeof(T));
+            //todo
+            for(int i=0;i<other._dataEnd-other._Begin+1;i++)
             {
-                _Begin[i]=other._storeBegin[i];
-            }*/
-            memcpy(_Begin,other._Begin,(n+1)*sizeof(T));
+                (_Begin[i])=new T(*(other._Begin[i]));
+            }
         }
         /**
          * Destructor
@@ -321,11 +327,11 @@ namespace sjtu {
                 int n=other._storeEnd-other._Begin;
                 _build(n+1);
                 _dataEnd=(other._dataEnd-other._Begin)+_Begin;
-                /*for(int i=other._dataBegin-other._storeBegin;i<other._dataEnd-other._storeBegin+1;i++)
+                //memcpy(_Begin,other._Begin,(n+1)*sizeof(T));
+                for(int i=0;i<other._dataEnd-other._Begin+1;i++)
                 {
-                    _Begin[i]=other._storeBegin[i];
-                }*/
-                memcpy(_Begin,other._Begin,(n+1)*sizeof(T));
+                    (_Begin[i])=new T(*(other._Begin[i]));
+                }
             }
             return *this;
         }
@@ -336,11 +342,11 @@ namespace sjtu {
          */
         T & at(const size_t &pos) {
             if(pos<0 || pos>_dataEnd-_Begin)throw index_out_of_bound();
-            else return *(_Begin+pos);
+            else return **(_Begin+pos);
         }
         const T & at(const size_t &pos) const {
             if(pos<0 || pos>_dataEnd-_Begin)throw index_out_of_bound();
-            else return *(_Begin+pos);
+            else return **(_Begin+pos);
         }
         /**
          *
@@ -351,11 +357,11 @@ namespace sjtu {
          */
         T & operator[](const size_t &pos) {
             if(pos<0 || pos>_dataEnd-_Begin)throw index_out_of_bound();
-            else return *(_Begin+pos);
+            else return **(_Begin+pos);
         }
         const T & operator[](const size_t &pos) const {
             if(pos<0 || pos>_dataEnd-_Begin)throw index_out_of_bound();
-            else return *(_Begin+pos);
+            else return **(_Begin+pos);
         }
         /**
          *
@@ -364,7 +370,7 @@ namespace sjtu {
          */
         const T & front() const {
             if(_dataEnd<_Begin)throw container_is_empty();
-            else return *_Begin;
+            else return **_Begin;
         }
         /**
          *
@@ -373,7 +379,7 @@ namespace sjtu {
          */
         const T & back() const {
             if(_dataEnd<_Begin)throw container_is_empty();
-            else return *_dataEnd;
+            else return **_dataEnd;
         }
         /**
          *
@@ -426,6 +432,10 @@ namespace sjtu {
          * clears the contents
          */
         void clear() {
+            for(auto it=_Begin;it!=_dataEnd+1;it++)
+            {
+                delete *it;
+            }
             _dataEnd=_Begin-1;
         }
         /**
@@ -446,7 +456,7 @@ namespace sjtu {
                 _Begin[base+i+1]=_Begin[base+i];
             }
             _dataEnd++;
-            _Begin[base+p]=value;
+            _Begin[base+p]=new T(value);
             iterator ans(this,_Begin+base+p,1);
             return ans;
         }
@@ -471,7 +481,7 @@ namespace sjtu {
                 _Begin[base+i+1]=_Begin[base+i];
             }
             _dataEnd++;
-            _Begin[base+p]=value;
+            _Begin[base+p]=new T(value);
             iterator ans(this,_Begin+base+p,1);
             return ans;
         }
@@ -482,13 +492,13 @@ namespace sjtu {
          * If the iterator pos refers the last element, the end() iterator is returned.
          */
         iterator erase(iterator pos) {
-            int p=(pos-this->begin())+_Begin-_Begin;
-            T* _p=_Begin+p;
-            _p->~T();
+            int p=(pos-this->begin());
+            T** _p=_Begin+p;
+            delete *_p;
             for(;_p!=_dataEnd;_p++)
             {
-                //(*_p)=*(_p+1);
-                memcpy(_p,_p+1,sizeof(T));
+                *_p=*(_p+1);
+                //memcpy(_p,_p+1,sizeof(T));
             }
             _dataEnd--;
             _p=_Begin+p;
@@ -507,13 +517,13 @@ namespace sjtu {
          */
         iterator erase(const size_t &ind) {
             if(ind>=_dataEnd-_Begin+1)throw index_out_of_bound();
-            int p=(ind)+_Begin-_Begin;
-            T* _p=_Begin+p;
-            _p->~T();
+            int p=(ind);
+            T** _p=_Begin+p;
+            delete *_p;
             for(;_p!=_dataEnd;_p++)
             {
-                //(*_p)=*(_p+1);
-                memcpy(_p,_p+1,sizeof(T));
+                *_p=*(_p+1);
+                //memcpy(_p,_p+1,sizeof(T));
             }
             _dataEnd--;
             _p=_Begin+p;
@@ -535,7 +545,7 @@ namespace sjtu {
             }
             if(_dataEnd==_storeEnd)_rebuildMore();
             _dataEnd++;
-            new(_dataEnd) T(value);
+            *_dataEnd=new T(value);
         }
         /**
          * todo
@@ -544,7 +554,7 @@ namespace sjtu {
          */
         void pop_back() {
             if(_dataEnd<_Begin)throw container_is_empty();
-            _dataEnd->~T();
+            delete *_dataEnd;
             _dataEnd--;
         }
     };
