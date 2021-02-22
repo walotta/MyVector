@@ -314,6 +314,7 @@ public:
                 _storeBegin[i]=other._storeBegin[i];
             }
         }
+        return *this;
 	}
 	/**
 	 *
