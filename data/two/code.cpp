@@ -8,6 +8,11 @@ int main()
 {
 	sjtu::vector<long long> v;
 	for (long long i = 0; i < 1LL << 20; ++i) {
+	    std::cout<<i<<std::endl;
+	    if(i==12289)
+        {
+	        int a=0;
+        }
 		v.push_back(i);
 	}
 	std::cout << v.back() << std::endl;
